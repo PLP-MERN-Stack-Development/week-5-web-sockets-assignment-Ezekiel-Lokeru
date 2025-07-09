@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const connectDB = require('./config/db');
 
 // Load environment variables
 dotenv.config();
@@ -123,10 +124,14 @@ app.get('/', (req, res) => {
   res.send('Socket.io Chat Server is running');
 });
 
+//use routes
+app.use('/api/rooms', require('./routes/roomRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
+
 // Start server
+connectDB();
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(PORT, ()=> console.log(`Server is running on http://localhost:${PORT}`))
 
 module.exports = { app, server, io }; 
