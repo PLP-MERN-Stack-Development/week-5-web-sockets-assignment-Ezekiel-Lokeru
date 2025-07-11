@@ -7,6 +7,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
+const Message = require('./models/message');
 
 // Load environment variables
 dotenv.config();
@@ -33,8 +34,27 @@ const messages = [];
 const typingUsers = {};
 
 // Socket.io connection handler
-io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
+io.on("connection", (socket) => {
+  socket.on("chat message", async (msg) => {
+    // msg should include: { user, text, roomId }
+    try {
+      // Save to MongoDB
+      const saved = await Message.create({
+        user: msg.user,
+        text: msg.text,
+        roomId: msg.roomId, // Make sure you send roomId from frontend!
+      });
+      // Broadcast to room
+      io.to(msg.roomId).emit("chat message", saved);
+    } catch (err) {
+      console.error("Failed to save message:", err);
+    }
+  });
+
+  socket.on("joinRoom", ({ roomId }) => {
+    socket.join(roomId);
+  });
+
 
   // Handle user joining
   socket.on('user_join', (username) => {
